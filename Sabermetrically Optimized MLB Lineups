@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+
+# 2019 MLB season stats used found @ https://www.rotowire.com/baseball/stats.php?season=2019
+# Change year at end of URL and download CSV to get to date data
+stats = pd.read_csv('/Users/jack/Desktop/mlb-player-stats-Batters.csv')
+stats.head(5)
+
+# Create column for singles, and another for runs created
+stats.insert(23,'RC',0,allow_duplicates=True,)
+stats.insert(8,'1B',0,allow_duplicates=True,)
+
+# Create function to generate number of singles per player by subtracting HR's, 3B's, and 2B's.
+def number_singles(df):
+    for player in df['Player']:
+        singles = ((df[df['Player']==player]['H'])-(df[df['Player']==player]['HR'])-(df[df['Player']==player]['3B'])
+              - (df[df['Player']==player]['2B']))
+    df.loc[df['Player']==player,['1B']] = singles
+
+# Run function with df to autopopulate singles column. 
+number_singles(stats)
+
+# Create another function to calculate Runs Created
+# Runs Created Formula ("BASIC", via FanGraphs) = ((H + BB) * (1B + (2*2B) + (3*3B) + (4*HR))) / (AB + BB)
+# https://blogs.fangraphs.com/get-to-know-runs-created/
+
+def runs_created(df):
+    
+    for player in df['Player']:
+        rc = (((df[df['Player']==player]['H'])+(df[df['Player']==player]['BB']))*((df[df['Player']==player]['1B'])+(2*df[df['Player']==player]['2B'])+(3*df[df['Player']==player]['3B'])+(4*df[df['Player']==player]['HR'])))/((df[df['Player']==player]['AB'])+(df[df['Player']==player]['BB']))
+        
+        df.loc[df['Player']==player,['RC']] = rc
+        
+# Run function to autopopulate runs created column
+runs_created(stats)
+stats.round({'RC':3})
+
+# Create a list of team acronyms in the MLB.
+teams = []
+for team in stats['Team'].str.lower().unique():
+    teams.append(team)
+
+chosen_team = stats[stats.Team == str(input("Enter 3 letter team acronym, all CAPS"))]
+
+# Optimized Lineup following "https://www.samford.edu/sports-analytics/fans/2020/Optimizing-Collegiate-Baseball-Lineups
+
+opt_lineup = []
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OBP']==chosen_team['OBP'].max()]['Player']))
+chosen_team.drop(chosen_team['OBP'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['SLG']==chosen_team['SLG'].max()]['Player']))
+chosen_team.drop(chosen_team['SLG'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['SLG']==chosen_team['SLG'].max()]['Player']))
+chosen_team.drop(chosen_team['SLG'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+opt_lineup.append((chosen_team[chosen_team['OPS']==chosen_team['OPS'].max()]['Player']))
+chosen_team.drop(chosen_team['OPS'].idxmax(), inplace = True)
+
+battingorder = [1,3,0,4,2,5,6,7,8]
+opt_lineup = [opt_lineup[i] for i in battingorder]
+#print(opt_lineup)
+print(opt_lineup)
